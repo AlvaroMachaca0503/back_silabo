@@ -1,0 +1,30 @@
+from rest_framework.routers import DefaultRouter
+from .views import *
+
+router = DefaultRouter()
+router.register(r'universidades', UniversidadViewSet)
+router.register(r'facultades', FacultadViewSet)
+router.register(r'departamentos', DepartamentoViewSet)
+router.register(r'carreras', CarreraViewSet)
+router.register(r'planes', PlanCurricularViewSet)
+router.register(r'semestres-academicos', SemestreAcademicoViewSet)
+router.register(r'semestres-plan', SemestrePlanViewSet)
+router.register(r'areas', AreaViewSet)
+router.register(r'cursos', CursoViewSet)
+router.register(r'profesiones', ProfesionViewSet)
+router.register(r'profesores', ProfesorViewSet)
+router.register(r'cargas', CargaCursoViewSet)
+router.register(r'grupos', GrupoViewSet)
+router.register(r'estudiantes', EstudianteViewSet)
+router.register(r'competencias', CompetenciaViewSet)
+router.register(r'perfiles', PerfilEgresoViewSet)
+router.register(r'sumillas', SumillaViewSet)
+router.register(r'semanas', SemanaViewSet)
+router.register(r'metodologias', MetodologiaViewSet)
+router.register(r'bibliografias', BibliografiaViewSet)
+router.register(r'actividades', ActividadViewSet)
+router.register(r'criterios', CriterioEvaluacionViewSet)
+router.register(r'unidades', UnidadViewSet)
+router.register(r'silabos', SilaboViewSet)
+
+urlpatterns = router.urls
