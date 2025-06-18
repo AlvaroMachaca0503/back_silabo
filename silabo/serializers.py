@@ -30,12 +30,13 @@ class DepartamentoSerializer(serializers.ModelSerializer):
         
 
 class CarreraSerializer(serializers.ModelSerializer):
-    departamento = serializers.StringRelatedField()
+    departamento = serializers.PrimaryKeyRelatedField(queryset=Departamento.objects.all())
+    departamento_detalle = DepartamentoSerializer(source='departamento', read_only=True)
 
     class Meta:
         model = Carrera
-        fields = "__all__"
-
+        fields = ['id', 'nombre', 'activa', 'departamento', 'departamento_detalle']
+        
 
 # ─────────────────────────────────────────────
 #  Planes de estudio y periodos
