@@ -47,7 +47,7 @@ class PlanCurricularSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PlanCurricular
-        fields = ['id', 'en_vigor', 'fecha_culminacion', 'carrera', 'carrera_detalle']
+        fields = ['id', 'tag', 'en_vigor', 'fecha_culminacion', 'carrera', 'carrera_detalle']
 
 
 class SemestreAcademicoSerializer(serializers.ModelSerializer):
