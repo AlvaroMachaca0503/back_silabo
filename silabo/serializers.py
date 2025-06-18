@@ -13,11 +13,14 @@ class UniversidadSerializer(serializers.ModelSerializer):
 
 class FacultadSerializer(serializers.ModelSerializer):
     universidad = serializers.PrimaryKeyRelatedField(queryset=Universidad.objects.all())
-    # universidad = serializers.StringRelatedField()   # o UniversidadSerializer(read_only=True)
+    universidad_nombre = serializers.UniversidadSerializer(read_only=True)
 
     class Meta:
         model = Facultad
-        fields = "__all__"
+        fields = fields = ['id', 'nombre', 'descripcion', 'activa', 'universidad', 'universidad_nombre']
+        
+    def get_universidad_nombre(self, obj):
+        return obj.universidad.nombre if obj.universidad else None
 
 
 class DepartamentoSerializer(serializers.ModelSerializer):
