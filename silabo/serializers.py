@@ -42,11 +42,12 @@ class CarreraSerializer(serializers.ModelSerializer):
 #  Planes de estudio y periodos
 # ─────────────────────────────────────────────
 class PlanCurricularSerializer(serializers.ModelSerializer):
-    carrera = serializers.StringRelatedField()
+    carrera = serializers.PrimaryKeyRelatedField(queryset=Carrera.objects.all())
+    carrera_detalle = DepartamentoSerializer(source='carrera', read_only=True)
 
     class Meta:
         model = PlanCurricular
-        fields = "__all__"
+        fields = ['id', 'en_vigor', 'fecha_culminacion', 'carrera', 'carrera_detalle']
 
 
 class SemestreAcademicoSerializer(serializers.ModelSerializer):
