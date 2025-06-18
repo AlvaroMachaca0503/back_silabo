@@ -43,7 +43,7 @@ class CarreraSerializer(serializers.ModelSerializer):
 # ─────────────────────────────────────────────
 class PlanCurricularSerializer(serializers.ModelSerializer):
     carrera = serializers.PrimaryKeyRelatedField(queryset=Carrera.objects.all())
-    carrera_detalle = DepartamentoSerializer(source='carrera', read_only=True)
+    carrera_detalle = CarreraSerializer(source='carrera', read_only=True)
 
     class Meta:
         model = PlanCurricular
