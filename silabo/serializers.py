@@ -12,7 +12,8 @@ class UniversidadSerializer(serializers.ModelSerializer):
 
 
 class FacultadSerializer(serializers.ModelSerializer):
-    universidad = serializers.StringRelatedField()   # o UniversidadSerializer(read_only=True)
+    universidad = serializers.PrimaryKeyRelatedField(queryset=Universidad.objects.all())
+    # universidad = serializers.StringRelatedField()   # o UniversidadSerializer(read_only=True)
 
     class Meta:
         model = Facultad
