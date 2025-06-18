@@ -21,7 +21,8 @@ class FacultadSerializer(serializers.ModelSerializer):
 
 
 class DepartamentoSerializer(serializers.ModelSerializer):
-    facultad = serializers.StringRelatedField()
+    facultad = serializers.PrimaryKeyRelatedField(queryset=Facultad.objects.all())
+    facultad_detalle = FacultadSerializer(source='facultad', read_only=True)
 
     class Meta:
         model = Departamento
