@@ -26,8 +26,8 @@ class DepartamentoSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Departamento
-        fields = "__all__"
-
+        fields = ['id', 'nombre', 'activo', 'facultad', 'facultad_detalle']
+        
 
 class CarreraSerializer(serializers.ModelSerializer):
     departamento = serializers.StringRelatedField()
