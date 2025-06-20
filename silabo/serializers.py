@@ -58,7 +58,7 @@ class SemestreAcademicoSerializer(serializers.ModelSerializer):
 
 class SemestrePlanSerializer(serializers.ModelSerializer):
     plan = serializers.PrimaryKeyRelatedField(queryset=PlanCurricular.objects.all())
-    plan_detalle = PlanCurricularSerializer(source='planes', read_only=True)
+    plan_detalle = PlanCurricularSerializer(source='plan', read_only=True)
 
 
     class Meta:
