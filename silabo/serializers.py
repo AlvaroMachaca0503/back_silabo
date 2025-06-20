@@ -1,10 +1,25 @@
 from rest_framework import serializers
 from .models import *
-
+from django.contrib.auth.models import User
 
 # ─────────────────────────────────────────────
 #  Estructura académica
 # ─────────────────────────────────────────────
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("username", "password", "first_name", "last_name", "email")
+        extra_kwargs = {"password": {"write_only": True}}
+
+    def create(self, validated_data):
+        # Crea el usuario y le aplica set_password
+        user = User(**validated_data)
+        user.set_password(validated_data["password"])
+        user.save()
+        return user
+
+
 class UniversidadSerializer(serializers.ModelSerializer):
     class Meta:
         model = Universidad
@@ -108,12 +123,22 @@ class ProfesionSerializer(serializers.ModelSerializer):
 
 
 class ProfesorSerializer(serializers.ModelSerializer):
-    usuario = serializers.StringRelatedField()
-    profesion = serializers.StringRelatedField()
+    usuario = UserSerializer()
+    profesion = serializers.StringRelatedField(read_only=True)
+    profesion_id = serializers.PrimaryKeyRelatedField(
+        queryset=Profesion.objects.all(), write_only=True, source="profesion"
+    )
 
     class Meta:
         model = Profesor
-        fields = "__all__"
+        fields = ["id", "usuario", "profesion", "profesion_id", "dni", "genero", "fecha_nacimiento", "nacionalidad", "telefono"]
+
+    def create(self, validated_data):
+        user_data = validated_data.pop("usuario")
+        user = UserSerializer().create(user_data)
+        profesor = Profesor.objects.create(usuario=user, **validated_data)
+        return profesor
+
 
 
 class CargaCursoSerializer(serializers.ModelSerializer):
