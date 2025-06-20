@@ -139,6 +139,24 @@ class ProfesorSerializer(serializers.ModelSerializer):
         profesor = Profesor.objects.create(usuario=user, **validated_data)
         return profesor
 
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop("usuario", None)
+        if user_data:
+            user = instance.usuario
+            for attr, value in user_data.items():
+                if attr == "password":
+                    user.set_password(value)
+                else:
+                    setattr(user, attr, value)
+            user.save()
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        return instance
+
+
 
 
 class CargaCursoSerializer(serializers.ModelSerializer):
