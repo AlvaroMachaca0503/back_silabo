@@ -76,13 +76,26 @@ class AreaSerializer(serializers.ModelSerializer):
 
 
 class CursoSerializer(serializers.ModelSerializer):
-    area = serializers.StringRelatedField()
-    semestre = serializers.StringRelatedField()
-    prerrequisitos = serializers.StringRelatedField(many=True)
+    area = serializers.PrimaryKeyRelatedField(queryset=Area.objects.all())
+    area_detalle = AreaSerializer(source='area', read_only=True)
+    
+    semestre = serializers.PrimaryKeyRelatedField(queryset=SemestrePlan.objects.all())
+    semestre_detalle = SemestrePlanSerializer(source='semestre', read_only=True)
+    
+    prerrequisitos = serializers.PrimaryKeyRelatedField(
+        queryset=Curso.objects.all(), many=True, write_only=True
+    )
+    prerrequisitos_detalle = serializers.StringRelatedField(
+        many=True, source='prerrequisitos', read_only=True
+    )
 
     class Meta:
         model = Curso
-        fields = "__all__"
+        fields = ['id', 'nombre', 'codigo', 'descripcion', 'horas_teoria',
+                  'horas_practica', 'horas_laboratorio', 'horas_teopra',
+                  'creditos', 'activo', 'area', 'area_detalle',
+                  'semestre', 'semestre_detalle',
+                  'prerrequisitos', 'prerrequisitos_detalle']
 
 
 # ─────────────────────────────────────────────
