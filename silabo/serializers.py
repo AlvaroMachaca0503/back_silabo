@@ -63,7 +63,7 @@ class SemestrePlanSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = SemestrePlan
-        fields = ['id', 'nombre', 'detalles', 'plan', 'plan_detalles']
+        fields = ['id', 'nombre', 'detalles', 'plan', 'plan_detalle']
 
 
 # ─────────────────────────────────────────────
