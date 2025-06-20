@@ -125,6 +125,7 @@ class Profesion(models.Model):
 class Profesor(models.Model):
     usuario = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profesor")
     profesion = models.ForeignKey(Profesion, on_delete=models.SET_NULL, null=True, blank=True)
+    dni = models.CharField(max_length=8, null=True, blank=True)
     genero = models.CharField(max_length=1, choices=[("M", "Masculino"), ("F", "Femenino")])
     fecha_nacimiento = models.DateField()
     nacionalidad = models.CharField(max_length=50)
