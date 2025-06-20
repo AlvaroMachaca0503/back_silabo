@@ -57,11 +57,13 @@ class SemestreAcademicoSerializer(serializers.ModelSerializer):
 
 
 class SemestrePlanSerializer(serializers.ModelSerializer):
-    plan = serializers.StringRelatedField()
+    plan = serializers.PrimaryKeyRelatedField(queryset=PlanCurricular.objects.all())
+    plan_detalle = PlanCurricularSerializer(source='planes', read_only=True)
+
 
     class Meta:
         model = SemestrePlan
-        fields = "__all__"
+        fields = ['id', 'nombre', 'detalles', 'plan', 'plan_detalles']
 
 
 # ─────────────────────────────────────────────
