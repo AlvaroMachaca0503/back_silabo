@@ -6,18 +6,35 @@ from django.contrib.auth.models import User
 #  Estructura académica
 # ─────────────────────────────────────────────
 
+from django.contrib.auth.models import User
+from rest_framework import serializers
+
 class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=False)
+
     class Meta:
         model = User
         fields = ("username", "password", "first_name", "last_name", "email")
-        extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
-        # Crea el usuario y le aplica set_password
+        password = validated_data.pop("password", None)
         user = User(**validated_data)
-        user.set_password(validated_data["password"])
+        if password:
+            user.set_password(password)
+        else:
+            raise serializers.ValidationError({"password": "Este campo es requerido para crear el usuario."})
         user.save()
         return user
+
+    def update(self, instance, validated_data):
+        password = validated_data.pop("password", None)
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        if password:
+            instance.set_password(password)
+        instance.save()
+        return instance
+
 
 
 class UniversidadSerializer(serializers.ModelSerializer):
@@ -122,16 +139,24 @@ class ProfesionSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+from rest_framework import serializers
+from .models import Profesor, Profesion
+from django.contrib.auth.models import User
+from .serializers import UserSerializer  # Asegúrate de importar bien
+
 class ProfesorSerializer(serializers.ModelSerializer):
     usuario = UserSerializer()
     profesion = serializers.StringRelatedField(read_only=True)
     profesion_id = serializers.PrimaryKeyRelatedField(
-        queryset=Profesion.objects.all(), write_only=True, source="profesion"
+        queryset=Profesion.objects.all(), write_only=True, source="profesion", required=False
     )
 
     class Meta:
         model = Profesor
-        fields = ["id", "usuario", "profesion", "profesion_id", "dni", "genero", "fecha_nacimiento", "nacionalidad", "telefono"]
+        fields = [
+            "id", "usuario", "profesion", "profesion_id", "dni",
+            "genero", "fecha_nacimiento", "nacionalidad", "telefono"
+        ]
 
     def create(self, validated_data):
         user_data = validated_data.pop("usuario")
@@ -142,19 +167,14 @@ class ProfesorSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         user_data = validated_data.pop("usuario", None)
         if user_data:
-            user = instance.usuario
-            for attr, value in user_data.items():
-                if attr == "password":
-                    user.set_password(value)
-                else:
-                    setattr(user, attr, value)
-            user.save()
+            user_serializer = UserSerializer()
+            user_serializer.update(instance.usuario, user_data)
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
-
         return instance
+
 
 
 
