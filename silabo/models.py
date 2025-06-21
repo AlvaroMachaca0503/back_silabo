@@ -277,8 +277,6 @@ class Silabo(models.Model):
     carrera = models.ForeignKey(Carrera, on_delete=models.CASCADE, related_name="silabos")
     periodo = models.CharField(max_length=40)
     curso = models.ForeignKey(Curso, on_delete=models.CASCADE, related_name="silabos")
-    campo_prueba = models.CharField(max_length=10, default='x')
-
     competencia = models.ForeignKey(Competencia, on_delete=models.SET_NULL, null=True, related_name="silabos")
     perfil = models.ForeignKey(PerfilEgreso, on_delete=models.SET_NULL, null=True, related_name="silabos")
     competencia_profesional = models.ForeignKey(
