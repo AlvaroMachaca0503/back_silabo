@@ -257,13 +257,21 @@ class CriterioEvaluacionSerializer(serializers.ModelSerializer):
 
 
 class UnidadSerializer(serializers.ModelSerializer):
-    semana = serializers.StringRelatedField()
-    metodologia = serializers.StringRelatedField()
-    bibliografia = serializers.StringRelatedField()
+    semana = serializers.PrimaryKeyRelatedField(queryset=Semana.objects.all())
+    semana_detalle = SemanaSerializer(source='semana', read_only=True)
+    
+    metodologia = serializers.PrimaryKeyRelatedField(queryset=Metodologia.objects.all())
+    metodologia_detalle = MetodologiaSerializer(source='metodologia', read_only=True)
+    
+    bibliografia = serializers.PrimaryKeyRelatedField(queryset=Bibliografia.objects.all())
+    bibliografia_detalle = BibliografiaSerializer(source='bibliografia', read_only=True)
+    
 
     class Meta:
         model = Unidad
-        fields = "__all__"
+        fields = ["id", "inicio", "final", "descripcion", "activo",
+                  "semana", "semana_detalle", "metodologia", "metodologia_detalle",
+                  "bibliografia", "bibliografia_detalle"]
 
 
 # ─────────────────────────────────────────────
