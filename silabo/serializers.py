@@ -278,19 +278,52 @@ class UnidadSerializer(serializers.ModelSerializer):
 #  Silabos
 # ─────────────────────────────────────────────
 class SilaboSerializer(serializers.ModelSerializer):
-    profesor = serializers.StringRelatedField()
-    facultad = serializers.StringRelatedField()
-    carrera = serializers.StringRelatedField()
-    curso = serializers.StringRelatedField()
+    profesor = serializers.PrimaryKeyRelatedField(queryset=Profesor.objects.all())
+    profesor_detalle = ProfesorSerializer(source='profesor', read_only=True)
 
-    competencia = serializers.StringRelatedField()
-    perfil = serializers.StringRelatedField()
-    competencia_profesional = serializers.StringRelatedField()
-    sumilla = serializers.StringRelatedField()
-    unidad = serializers.StringRelatedField()
-    actividad = serializers.StringRelatedField()
-    criterio = serializers.StringRelatedField()
+    facultad = serializers.PrimaryKeyRelatedField(queryset=Facultad.objects.all())
+    facultad_detalle = FacultadSerializer(source='facultad', read_only=True)
+
+    carrera = serializers.PrimaryKeyRelatedField(queryset=Carrera.objects.all())
+    carrera_detalle = CarreraSerializer(source='carrera', read_only=True)
+
+    curso = serializers.PrimaryKeyRelatedField(queryset=Curso.objects.all())
+    curso_detalle = CursoSerializer(source='curso', read_only=True)
+
+    competencia = serializers.PrimaryKeyRelatedField(queryset=Competencia.objects.all(), allow_null=True)
+    competencia_detalle = CompetenciaSerializer(source='competencia', read_only=True)
+
+    perfil = serializers.PrimaryKeyRelatedField(queryset=PerfilEgreso.objects.all(), allow_null=True)
+    perfil_detalle = PerfilEgresoSerializer(source='perfil', read_only=True)
+
+    competencia_profesional = serializers.PrimaryKeyRelatedField(queryset=Competencia.objects.all(), allow_null=True)
+    competencia_profesional_detalle = CompetenciaSerializer(source='competencia_profesional', read_only=True)
+
+    sumilla = serializers.PrimaryKeyRelatedField(queryset=Sumilla.objects.all(), allow_null=True)
+    sumilla_detalle = SumillaSerializer(source='sumilla', read_only=True)
+
+    unidad = serializers.PrimaryKeyRelatedField(queryset=Unidad.objects.all(), allow_null=True)
+    unidad_detalle = UnidadSerializer(source='unidad', read_only=True)
+
+    actividad = serializers.PrimaryKeyRelatedField(queryset=Actividad.objects.all(), allow_null=True)
+    actividad_detalle = ActividadSerializer(source='actividad', read_only=True)
+
+    criterio = serializers.PrimaryKeyRelatedField(queryset=CriterioEvaluacion.objects.all(), allow_null=True)
+    criterio_detalle = CriterioEvaluacionSerializer(source='criterio', read_only=True)
 
     class Meta:
         model = Silabo
-        fields = "__all__"
+        fields = [
+            "id", "periodo", "activo",
+            "profesor", "profesor_detalle",
+            "facultad", "facultad_detalle",
+            "carrera", "carrera_detalle",
+            "curso", "curso_detalle",
+            "competencia", "competencia_detalle",
+            "perfil", "perfil_detalle",
+            "competencia_profesional", "competencia_profesional_detalle",
+            "sumilla", "sumilla_detalle",
+            "unidad", "unidad_detalle",
+            "actividad", "actividad_detalle",
+            "criterio", "criterio_detalle",
+        ]
