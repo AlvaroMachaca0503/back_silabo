@@ -367,7 +367,7 @@ class SilaboSerializer(serializers.ModelSerializer):
     class Meta:
         model = Silabo
         fields = [
-            "id", "competencia_curso", "competencia_perfil_egreso", 
+            "id", "nombre", "competencia_curso", "competencia_perfil_egreso", 
             "competencia_profesional", "sumilla", "fecha_creacion", 
             "fecha_modificacion", "activo",
             "periodo_lectivo", "periodo_lectivo_detalle",

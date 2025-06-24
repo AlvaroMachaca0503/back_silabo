@@ -262,6 +262,7 @@ class Metodologia(models.Model):
 # ─────────────────────────────────────────────
 
 class Silabo(models.Model):
+    nombre = models.CharField(max_length=250, null=True)
     periodo_lectivo = models.ForeignKey(PeriodoLectivo, on_delete=models.CASCADE, related_name="silabos")
     competencia_curso = models.TextField(null=True)
     competencia_perfil_egreso = models.TextField(null=True)
