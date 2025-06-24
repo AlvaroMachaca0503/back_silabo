@@ -284,6 +284,7 @@ class Silabo(models.Model):
 # ─────────────────────────────────────────────
 
 class Unidad(models.Model):
+    numero = models.PositiveSmallIntegerField(null=True)
     inicio = models.DateField()
     final = models.DateField()
     descripcion = models.TextField()

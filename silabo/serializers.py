@@ -319,7 +319,7 @@ class UnidadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Unidad
-        fields = ["id", "inicio", "final", "descripcion", "metodologia", 
+        fields = ["id", "numero", "inicio", "final", "descripcion", "metodologia", 
                  "activo", "silabo", "silabo_detalle"]
 
 
