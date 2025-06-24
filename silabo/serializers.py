@@ -363,9 +363,6 @@ class SilaboSerializer(serializers.ModelSerializer):
     curso_detalle = CursoSerializer(source='curso', read_only=True)
 
     # Campos de solo lectura para las relaciones inversas
-    unidades = UnidadSerializer(source='actividades', many=True, read_only=True)
-    actividades_relacionadas = ActividadSerializer(source='actividades', many=True, read_only=True)
-    criterios_evaluacion = CriterioEvaluacionSerializer(source='actividades', many=True, read_only=True)
 
     class Meta:
         model = Silabo
@@ -377,7 +374,6 @@ class SilaboSerializer(serializers.ModelSerializer):
             "profesor", "profesor_detalle",
             "facultad", "facultad_detalle",
             "carrera", "carrera_detalle",
-            "curso", "curso_detalle",
-            "unidades", "actividades_relacionadas", "criterios_evaluacion"
+            "curso", "curso_detalle"
         ]
         read_only_fields = ["fecha_creacion", "fecha_modificacion"]
