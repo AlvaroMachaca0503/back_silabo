@@ -15,6 +15,8 @@ DEBUG = os.getenv('DJANGO_DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
+AUTH_USER_MODEL = 'silabo.CustomUser'
+
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=12),   # Token de acceso válido por 12 horas
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),    # Token de refresco válido por 7 días (opcional)

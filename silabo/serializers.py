@@ -1,24 +1,28 @@
 from rest_framework import serializers
 from .models import *
-from django.contrib.auth.models import User
 
 # ─────────────────────────────────────────────
-#  Estructura académica
+#  SEGURIDAD
 # ─────────────────────────────────────────────
 
-from django.contrib.auth.models import User
-from rest_framework import serializers
+class RolSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rol
+        fields = "__all__"
 
-class UserSerializer(serializers.ModelSerializer):
+
+class CustomUserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
+    rol_detalle = RolSerializer(source='rol', read_only=True)
 
     class Meta:
-        model = User
-        fields = ("username", "password", "first_name", "last_name", "email")
+        model = CustomUser
+        fields = ("id", "username", "password", "first_name", "last_name", "email", 
+                 "rol", "rol_detalle", "activo")
 
     def create(self, validated_data):
         password = validated_data.pop("password", None)
-        user = User(**validated_data)
+        user = CustomUser(**validated_data)
         if password:
             user.set_password(password)
         else:
@@ -36,6 +40,44 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
 
 
+class PersonaSerializer(serializers.ModelSerializer):
+    usuario = CustomUserSerializer()
+
+    class Meta:
+        model = Persona
+        fields = ["id", "nombre", "apellido_paterno", "apellido_materno", "dni",
+                 "fecha_nacimiento", "genero", "nacionalidad", "telefono", 
+                 "usuario", "activo"]
+
+    def create(self, validated_data):
+        user_data = validated_data.pop("usuario")
+        user = CustomUserSerializer().create(user_data)
+        persona = Persona.objects.create(usuario=user, **validated_data)
+        return persona
+
+    def update(self, instance, validated_data):
+        user_data = validated_data.pop("usuario", None)
+        if user_data:
+            user_serializer = CustomUserSerializer()
+            user_serializer.update(instance.usuario, user_data)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
+
+
+class LogProcesosSerializer(serializers.ModelSerializer):
+    usuario_detalle = CustomUserSerializer(source='usuario', read_only=True)
+
+    class Meta:
+        model = LogProcesos
+        fields = ["id", "fecha", "accion", "usuario", "usuario_detalle"]
+
+
+# ─────────────────────────────────────────────
+#  Estructura académica
+# ─────────────────────────────────────────────
 
 class UniversidadSerializer(serializers.ModelSerializer):
     class Meta:
@@ -49,7 +91,7 @@ class FacultadSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Facultad
-        fields = ['id', 'nombre', 'descripcion', 'activa', 'universidad', 'universidad_detalle']
+        fields = ['id', 'nombre', 'descripcion', 'activo', 'universidad', 'universidad_detalle']
 
 
 class DepartamentoSerializer(serializers.ModelSerializer):
@@ -67,19 +109,20 @@ class CarreraSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Carrera
-        fields = ['id', 'nombre', 'activa', 'departamento', 'departamento_detalle']
-        
+        fields = ['id', 'nombre', 'activo', 'departamento', 'departamento_detalle']
+
 
 # ─────────────────────────────────────────────
 #  Planes de estudio y periodos
 # ─────────────────────────────────────────────
+
 class PlanCurricularSerializer(serializers.ModelSerializer):
     carrera = serializers.PrimaryKeyRelatedField(queryset=Carrera.objects.all())
     carrera_detalle = CarreraSerializer(source='carrera', read_only=True)
 
     class Meta:
         model = PlanCurricular
-        fields = ['id', 'tag', 'en_vigor', 'fecha_culminacion', 'carrera', 'carrera_detalle']
+        fields = ['id', 'tag', 'activo', 'fecha_culminacion', 'carrera', 'carrera_detalle']
 
 
 class SemestreAcademicoSerializer(serializers.ModelSerializer):
@@ -91,25 +134,37 @@ class SemestreAcademicoSerializer(serializers.ModelSerializer):
 class SemestrePlanSerializer(serializers.ModelSerializer):
     plan = serializers.PrimaryKeyRelatedField(queryset=PlanCurricular.objects.all())
     plan_detalle = PlanCurricularSerializer(source='plan', read_only=True)
-
+    semestre_academico = serializers.PrimaryKeyRelatedField(queryset=SemestreAcademico.objects.all())
+    semestre_academico_detalle = SemestreAcademicoSerializer(source='semestre_academico', read_only=True)
 
     class Meta:
         model = SemestrePlan
-        fields = ['id', 'nombre', 'detalles', 'plan', 'plan_detalle']
+        fields = ['id', 'nombre', 'detalles', 'activo', 'plan', 'plan_detalle',
+                 'semestre_academico', 'semestre_academico_detalle']
 
 
 # ─────────────────────────────────────────────
 #  Cursos y prerrequisitos
 # ─────────────────────────────────────────────
+
 class AreaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Area
         fields = "__all__"
 
 
+class TipoCursoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TipoCurso
+        fields = "__all__"
+
+
 class CursoSerializer(serializers.ModelSerializer):
     area = serializers.PrimaryKeyRelatedField(queryset=Area.objects.all())
     area_detalle = AreaSerializer(source='area', read_only=True)
+    
+    tipo_curso = serializers.PrimaryKeyRelatedField(queryset=TipoCurso.objects.all())
+    tipo_curso_detalle = TipoCursoSerializer(source='tipo_curso', read_only=True)
     
     semestre = serializers.PrimaryKeyRelatedField(queryset=SemestrePlan.objects.all())
     semestre_detalle = SemestrePlanSerializer(source='semestre', read_only=True)
@@ -125,7 +180,8 @@ class CursoSerializer(serializers.ModelSerializer):
         model = Curso
         fields = ['id', 'nombre', 'codigo', 'descripcion', 'horas_teoria',
                   'horas_practica', 'horas_laboratorio', 'horas_teopra',
-                  'creditos', 'activo', 'area', 'area_detalle',
+                  'creditos', 'horas_totales', 'activo', 
+                  'area', 'area_detalle', 'tipo_curso', 'tipo_curso_detalle',
                   'semestre', 'semestre_detalle',
                   'prerrequisitos', 'prerrequisitos_detalle']
 
@@ -133,42 +189,32 @@ class CursoSerializer(serializers.ModelSerializer):
 # ─────────────────────────────────────────────
 #  Profesores y carga académica
 # ─────────────────────────────────────────────
+
 class ProfesionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profesion
         fields = "__all__"
 
 
-from rest_framework import serializers
-from .models import Profesor, Profesion
-from django.contrib.auth.models import User
-from .serializers import UserSerializer  # Asegúrate de importar bien
-
 class ProfesorSerializer(serializers.ModelSerializer):
-    usuario = UserSerializer()
-    profesion = serializers.StringRelatedField(read_only=True)
-    profesion_id = serializers.PrimaryKeyRelatedField(
-        queryset=Profesion.objects.all(), write_only=True, source="profesion", required=False
-    )
+    persona = PersonaSerializer()
+    profesion_detalle = ProfesionSerializer(source='profesion', read_only=True)
 
     class Meta:
         model = Profesor
-        fields = [
-            "id", "usuario", "profesion", "profesion_id", "dni",
-            "genero", "fecha_nacimiento", "nacionalidad", "telefono"
-        ]
+        fields = ["id", "persona", "profesion", "profesion_detalle", "activo"]
 
     def create(self, validated_data):
-        user_data = validated_data.pop("usuario")
-        user = UserSerializer().create(user_data)
-        profesor = Profesor.objects.create(usuario=user, **validated_data)
+        persona_data = validated_data.pop("persona")
+        persona = PersonaSerializer().create(persona_data)
+        profesor = Profesor.objects.create(persona=persona, **validated_data)
         return profesor
 
     def update(self, instance, validated_data):
-        user_data = validated_data.pop("usuario", None)
-        if user_data:
-            user_serializer = UserSerializer()
-            user_serializer.update(instance.usuario, user_data)
+        persona_data = validated_data.pop("persona", None)
+        if persona_data:
+            persona_serializer = PersonaSerializer()
+            persona_serializer.update(instance.persona, persona_data)
 
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
@@ -176,59 +222,63 @@ class ProfesorSerializer(serializers.ModelSerializer):
         return instance
 
 
-
-
-
 class CargaCursoSerializer(serializers.ModelSerializer):
-    profesor = serializers.StringRelatedField()
-    curso = serializers.StringRelatedField()
+    profesor = serializers.PrimaryKeyRelatedField(queryset=Profesor.objects.all())
+    profesor_detalle = ProfesorSerializer(source='profesor', read_only=True)
+    curso = serializers.PrimaryKeyRelatedField(queryset=Curso.objects.all())
+    curso_detalle = CursoSerializer(source='curso', read_only=True)
 
     class Meta:
         model = CargaCurso
-        fields = "__all__"
+        fields = ["id", "profesor", "profesor_detalle", "curso", "curso_detalle", 
+                 "detalles", "activo"]
 
 
 class GrupoSerializer(serializers.ModelSerializer):
-    curso = serializers.StringRelatedField()
+    curso = serializers.PrimaryKeyRelatedField(queryset=Curso.objects.all())
+    curso_detalle = CursoSerializer(source='curso', read_only=True)
 
     class Meta:
         model = Grupo
-        fields = "__all__"
+        fields = ["id", "nombre", "codigo", "curso", "curso_detalle", "activo"]
 
 
 # ─────────────────────────────────────────────
 #  Estudiantes
 # ─────────────────────────────────────────────
+
 class EstudianteSerializer(serializers.ModelSerializer):
+    persona = PersonaSerializer()
+
     class Meta:
         model = Estudiante
-        fields = "__all__"
+        fields = ["id", "persona", "fecha_creacion", "activo"]
+
+    def create(self, validated_data):
+        persona_data = validated_data.pop("persona")
+        persona = PersonaSerializer().create(persona_data)
+        estudiante = Estudiante.objects.create(persona=persona, **validated_data)
+        return estudiante
+
+    def update(self, instance, validated_data):
+        persona_data = validated_data.pop("persona", None)
+        if persona_data:
+            persona_serializer = PersonaSerializer()
+            persona_serializer.update(instance.persona, persona_data)
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+        return instance
 
 
 # ─────────────────────────────────────────────
-#  Modelos de apoyo al sílabo
+#  Modelos complementarios para el sílabo
 # ─────────────────────────────────────────────
-class CompetenciaSerializer(serializers.ModelSerializer):
+
+class PeriodoLectivoSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Competencia
-        fields = "__all__"
-
-
-class PerfilEgresoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = PerfilEgreso
-        fields = "__all__"
-
-
-class SumillaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Sumilla
-        fields = "__all__"
-
-
-class SemanaSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Semana
+        model = PeriodoLectivo
         fields = "__all__"
 
 
@@ -244,40 +294,59 @@ class BibliografiaSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class ActividadSerializer(serializers.ModelSerializer):
+class SemanaSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Actividad
+        model = Semana
         fields = "__all__"
 
 
-class CriterioEvaluacionSerializer(serializers.ModelSerializer):
+class ContenidoEspecificoSerializer(serializers.ModelSerializer):
+    semana = serializers.PrimaryKeyRelatedField(queryset=Semana.objects.all())
+    semana_detalle = SemanaSerializer(source='semana', read_only=True)
+
     class Meta:
-        model = CriterioEvaluacion
-        fields = "__all__"
+        model = ContenidoEspecifico
+        fields = ["id", "contenido", "activo", "semana", "semana_detalle"]
 
 
 class UnidadSerializer(serializers.ModelSerializer):
-    semana = serializers.PrimaryKeyRelatedField(queryset=Semana.objects.all())
-    semana_detalle = SemanaSerializer(source='semana', read_only=True)
-    
-    metodologia = serializers.PrimaryKeyRelatedField(queryset=Metodologia.objects.all())
-    metodologia_detalle = MetodologiaSerializer(source='metodologia', read_only=True)
-    
-    bibliografia = serializers.PrimaryKeyRelatedField(queryset=Bibliografia.objects.all())
-    bibliografia_detalle = BibliografiaSerializer(source='bibliografia', read_only=True)
-    
+    metodologia = serializers.CharField()  # Como es TextField en el modelo
+    silabo = serializers.PrimaryKeyRelatedField(queryset=Silabo.objects.all())
+    silabo_detalle = serializers.StringRelatedField(source='silabo', read_only=True)
 
     class Meta:
         model = Unidad
-        fields = ["id", "inicio", "final", "descripcion", "activo",
-                  "semana", "semana_detalle", "metodologia", "metodologia_detalle",
-                  "bibliografia", "bibliografia_detalle"]
+        fields = ["id", "inicio", "final", "descripcion", "metodologia", 
+                 "activo", "silabo", "silabo_detalle"]
+
+
+class ActividadSerializer(serializers.ModelSerializer):
+    silabo = serializers.PrimaryKeyRelatedField(queryset=Silabo.objects.all())
+    silabo_detalle = serializers.StringRelatedField(source='silabo', read_only=True)
+
+    class Meta:
+        model = Actividad
+        fields = ["id", "nombre", "descripcion", "activo", "silabo", "silabo_detalle"]
+
+
+class CriterioEvaluacionSerializer(serializers.ModelSerializer):
+    silabo = serializers.PrimaryKeyRelatedField(queryset=Silabo.objects.all())
+    silabo_detalle = serializers.StringRelatedField(source='silabo', read_only=True)
+
+    class Meta:
+        model = CriterioEvaluacion
+        fields = ["id", "nombre", "peso", "fecha_inicio", "fecha_fin", 
+                 "descripcion", "activo", "silabo", "silabo_detalle"]
 
 
 # ─────────────────────────────────────────────
 #  Silabos
 # ─────────────────────────────────────────────
+
 class SilaboSerializer(serializers.ModelSerializer):
+    periodo_lectivo = serializers.PrimaryKeyRelatedField(queryset=PeriodoLectivo.objects.all())
+    periodo_lectivo_detalle = PeriodoLectivoSerializer(source='periodo_lectivo', read_only=True)
+
     profesor = serializers.PrimaryKeyRelatedField(queryset=Profesor.objects.all())
     profesor_detalle = ProfesorSerializer(source='profesor', read_only=True)
 
@@ -290,40 +359,22 @@ class SilaboSerializer(serializers.ModelSerializer):
     curso = serializers.PrimaryKeyRelatedField(queryset=Curso.objects.all())
     curso_detalle = CursoSerializer(source='curso', read_only=True)
 
-    competencia = serializers.PrimaryKeyRelatedField(queryset=Competencia.objects.all(), allow_null=True)
-    competencia_detalle = CompetenciaSerializer(source='competencia', read_only=True)
-
-    perfil = serializers.PrimaryKeyRelatedField(queryset=PerfilEgreso.objects.all(), allow_null=True)
-    perfil_detalle = PerfilEgresoSerializer(source='perfil', read_only=True)
-
-    competencia_profesional = serializers.PrimaryKeyRelatedField(queryset=Competencia.objects.all(), allow_null=True)
-    competencia_profesional_detalle = CompetenciaSerializer(source='competencia_profesional', read_only=True)
-
-    sumilla = serializers.PrimaryKeyRelatedField(queryset=Sumilla.objects.all(), allow_null=True)
-    sumilla_detalle = SumillaSerializer(source='sumilla', read_only=True)
-
-    unidad = serializers.PrimaryKeyRelatedField(queryset=Unidad.objects.all(), allow_null=True)
-    unidad_detalle = UnidadSerializer(source='unidad', read_only=True)
-
-    actividad = serializers.PrimaryKeyRelatedField(queryset=Actividad.objects.all(), allow_null=True)
-    actividad_detalle = ActividadSerializer(source='actividad', read_only=True)
-
-    criterio = serializers.PrimaryKeyRelatedField(queryset=CriterioEvaluacion.objects.all(), allow_null=True)
-    criterio_detalle = CriterioEvaluacionSerializer(source='criterio', read_only=True)
+    # Campos de solo lectura para las relaciones inversas
+    unidades = UnidadSerializer(source='actividades', many=True, read_only=True)
+    actividades_relacionadas = ActividadSerializer(source='actividades', many=True, read_only=True)
+    criterios_evaluacion = CriterioEvaluacionSerializer(source='actividades', many=True, read_only=True)
 
     class Meta:
         model = Silabo
         fields = [
-            "id", "periodo", "activo",
+            "id", "competencia_curso", "competencia_perfil_egreso", 
+            "competencia_profesional", "sumilla", "fecha_creacion", 
+            "fecha_modificacion", "activo",
+            "periodo_lectivo", "periodo_lectivo_detalle",
             "profesor", "profesor_detalle",
             "facultad", "facultad_detalle",
             "carrera", "carrera_detalle",
             "curso", "curso_detalle",
-            "competencia", "competencia_detalle",
-            "perfil", "perfil_detalle",
-            "competencia_profesional", "competencia_profesional_detalle",
-            "sumilla", "sumilla_detalle",
-            "unidad", "unidad_detalle",
-            "actividad", "actividad_detalle",
-            "criterio", "criterio_detalle",
+            "unidades", "actividades_relacionadas", "criterios_evaluacion"
         ]
+        read_only_fields = ["fecha_creacion", "fecha_modificacion"]
