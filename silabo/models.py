@@ -14,11 +14,16 @@ class Rol(models.Model):
 
 
 class CustomUser(AbstractUser):
+    email = models.EmailField(unique=True)
+
     rol = models.ForeignKey(Rol, on_delete=models.SET_NULL, null=True, related_name="usuarios")
     activo = models.BooleanField(default=True)
 
+    USERNAME_FIELD = 'email'  # <-- ESTA LÍNEA ES CLAVE
+    REQUIRED_FIELDS = ['username']  # Solo si aún quieres que username exista
+
     def __str__(self):
-        return self.username
+        return self.email
 
 
 class Persona(models.Model):

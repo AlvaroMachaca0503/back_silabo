@@ -12,21 +12,24 @@ class RolSerializer(serializers.ModelSerializer):
 
 
 class CustomUserSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(write_only=True, required=False)
+    password = serializers.CharField(write_only=True, required=True, style={'input_type': 'password'})
     rol_detalle = RolSerializer(source='rol', read_only=True)
 
     class Meta:
         model = CustomUser
-        fields = ("id", "username", "password", "first_name", "last_name", "email", 
-                 "rol", "rol_detalle", "activo")
+        fields = (
+            "id", "username", "password", "first_name", "last_name", 
+            "email", "rol", "rol_detalle", "activo"
+        )
+        extra_kwargs = {
+            'email': {'required': True},
+            'username': {'required': False},
+        }
 
     def create(self, validated_data):
-        password = validated_data.pop("password", None)
+        password = validated_data.pop("password")
         user = CustomUser(**validated_data)
-        if password:
-            user.set_password(password)
-        else:
-            raise serializers.ValidationError({"password": "Este campo es requerido para crear el usuario."})
+        user.set_password(password)
         user.save()
         return user
 
