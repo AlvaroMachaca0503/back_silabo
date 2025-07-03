@@ -1,4 +1,5 @@
 from rest_framework.routers import DefaultRouter
+from django.urls import path
 from .views import *
 
 router = DefaultRouter()
@@ -63,4 +64,11 @@ router.register(r'criterios', CriterioEvaluacionViewSet)
 # ─────────────────────────────────────────────
 router.register(r'silabos', SilaboViewSet)
 
-urlpatterns = router.urls
+# ─────────────────────────────────────────────
+#  AUTENTICACIÓN
+# ─────────────────────────────────────────────
+urlpatterns = [
+    path('api/login/', login_view, name='login'),
+    path('api/logout/', logout_view, name='logout'),
+    path('api/user/', user_info, name='user_info'),
+] + router.urls

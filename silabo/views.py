@@ -1,9 +1,11 @@
 from rest_framework import viewsets, status
 from rest_framework.response import Response
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from django.shortcuts import get_object_or_404
 from .models import *
 from .serializers import *
+from django.contrib.auth import authenticate, login, logout
+from rest_framework.permissions import AllowAny
 
 
 # ─────────────────────────────────────────────
@@ -583,3 +585,69 @@ class SilaboViewSet(viewsets.ModelViewSet):
                 {'error': 'periodo_id es requerido'}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+# ─────────────────────────────────────────────
+#  AUTENTICACIÓN
+# ─────────────────────────────────────────────
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def login_view(request):
+    """
+    Endpoint para iniciar sesión
+    """
+    email = request.data.get('email')
+    password = request.data.get('password')
+    
+    if not email or not password:
+        return Response(
+            {'error': 'Email y password son requeridos'}, 
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    user = authenticate(request, email=email, password=password)
+    
+    if user is not None:
+        login(request, user)
+        return Response({
+            'message': 'Login exitoso',
+            'user': {
+                'id': user.id,
+                'email': user.email,
+                'username': user.username,
+                'rol': user.rol.nombre if user.rol else None
+            }
+        })
+    else:
+        return Response(
+            {'error': 'Credenciales inválidas'}, 
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+@api_view(['POST'])
+def logout_view(request):
+    """
+    Endpoint para cerrar sesión
+    """
+    logout(request)
+    return Response({'message': 'Logout exitoso'})
+
+@api_view(['GET'])
+def user_info(request):
+    """
+    Endpoint para obtener información del usuario actual
+    """
+    if request.user.is_authenticated:
+        return Response({
+            'user': {
+                'id': request.user.id,
+                'email': request.user.email,
+                'username': request.user.username,
+                'rol': request.user.rol.nombre if request.user.rol else None
+            }
+        })
+    else:
+        return Response(
+            {'error': 'Usuario no autenticado'}, 
+            status=status.HTTP_401_UNAUTHORIZED
+        )

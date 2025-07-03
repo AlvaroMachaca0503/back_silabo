@@ -17,14 +17,17 @@ ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
 AUTH_USER_MODEL = 'silabo.CustomUser'
 
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=12),   # Token de acceso válido por 12 horas
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),    # Token de refresco válido por 7 días (opcional)
-    'ROTATE_REFRESH_TOKENS': False,
-    'BLACKLIST_AFTER_ROTATION': True,
+# Configuración de autenticación
+AUTHENTICATION_BACKENDS = [
+    'silabo.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 
-    'AUTH_HEADER_TYPES': ('Bearer',),
-}
+# Configuración de sesiones
+SESSION_COOKIE_AGE = 86400  # 24 horas en segundos
+SESSION_COOKIE_SECURE = False  # True en producción con HTTPS
+SESSION_COOKIE_HTTPONLY = True
+SESSION_COOKIE_SAMESITE = 'Lax'
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -52,7 +55,7 @@ MIDDLEWARE = [
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -61,7 +64,16 @@ REST_FRAMEWORK = {
 
 ROOT_URLCONF = 'silabo_s7_back.urls'
 
+# Configuración de CORS para desarrollo local
 CORS_ALLOW_ALL_ORIGINS = True
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+CORS_ALLOW_CREDENTIALS = True
 
 TEMPLATES = [
     {
